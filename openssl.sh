@@ -41,6 +41,8 @@ rm -rf ${SOURCE_DIR}/test/extensions/filters/listener/tls_inspector
 /usr/bin/cp -rf source/extensions/filters/listener/tls_inspector ${SOURCE_DIR}/source/extensions/filters/listener/
 /usr/bin/cp -rf test/extensions/transport_sockets/tls ${SOURCE_DIR}/test/extensions/transport_sockets/
 /usr/bin/cp -rf test/extensions/filters/listener/tls_inspector ${SOURCE_DIR}/test/extensions/filters/listener/
+/usr/bin/cp -rf test/common/network/* ${SOURCE_DIR}/test/common/network/
+/usr/bin/cp -rf test/integration/* ${SOURCE_DIR}/test/integration/
 /usr/bin/cp -rf source/common/network/connection_impl.cc ${SOURCE_DIR}/source/common/network
 
 /usr/bin/cp openssl.BUILD ${SOURCE_DIR}
