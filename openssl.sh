@@ -176,6 +176,27 @@ ADD_TEXT="    \"ssl\",
     \"openssl_cbs_lib\","
 replace_text
 
+FILE="bazel/envoy_build_system.bzl"
+DELETE_START_PATTERN="def envoy_select_boringssl"
+DELETE_STOP_PATTERN="})"
+START_OFFSET="0"
+ADD_TEXT=""
+replace_text
+
+FILE="source/common/common/BUILD"
+DELETE_START_PATTERN="\"envoy_select_boringssl\","
+DELETE_STOP_PATTERN=""
+START_OFFSET="0"
+ADD_TEXT=""
+replace_text
+
+FILE="source/common/common/BUILD"
+DELETE_START_PATTERN="copts = envoy_select_boringssl("
+DELETE_STOP_PATTERN="),"
+START_OFFSET="0"
+ADD_TEXT=""
+replace_text
+
 sed -i 's|#include "openssl/base.h"|#include "opensslcbs/cbs.h"|g' ${SOURCE_DIR}/source/extensions/quic_listeners/quiche/platform/quic_cert_utils_impl.h
 sed -i 's|#include "openssl/bytestring.h"||g' ${SOURCE_DIR}/source/extensions/quic_listeners/quiche/platform/quic_cert_utils_impl.cc
 sed -i 's|QuicPlatformTest, QuicStackTraceTest|QuicPlatformTest, DISABLED_QuicStackTraceTest|g' ${SOURCE_DIR}/test/extensions/quic_listeners/quiche/platform/quic_platform_test.cc
