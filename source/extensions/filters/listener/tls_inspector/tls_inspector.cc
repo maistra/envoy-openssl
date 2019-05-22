@@ -210,6 +210,7 @@ void Filter::parseClientHello(const void* data, size_t len) {
       done(false);
     }
     break;
+  case SSL_ERROR_SSL:
     if (clienthello_success_) {
       config_->stats().tls_found_.inc();
       if (alpn_found_) {
