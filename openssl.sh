@@ -70,15 +70,15 @@ DELETE_STOP_PATTERN="),"
 START_OFFSET="0"
 ADD_TEXT="    #EXTERNAL OPENSSL
     bssl_wrapper = dict(
-        sha256 = \"d9e500e1a8849c81e690966422baf66016a7ff85d044c210ad85644f62827158\",
-        strip_prefix = \"bssl_wrapper-34df33add45e1a02927fcf79b0bdd5899b7e2e36\",
-        urls = [\"https://github.com/bdecoste/bssl_wrapper/archive/34df33add45e1a02927fcf79b0bdd5899b7e2e36.tar.gz\"],
+        sha256 = \"38064f725b8b74f6dbe1d062e5a972b5d17fad4571060d4092eb2dce7ef27819\",
+        strip_prefix = \"bssl_wrapper-e87a3217ce61f8681e9c10776a62afccf563230a\",
+        urls = [\"https://github.com/maistra/bssl_wrapper/archive/e87a3217ce61f8681e9c10776a62afccf563230a.tar.gz\"],
     ),
     #EXTERNAL OPENSSL
     openssl_cbs = dict(
-        sha256 = \"682138dcf3f747811f21448579b502f8c7c6168316a2fad408863b4692e4ccf9\",
-        strip_prefix = \"openssl-cbs-bc89423efd78098d411821b40aed7644748f841b\",
-        urls = [\"https://github.com/bdecoste/openssl-cbs/archive/bc89423efd78098d411821b40aed7644748f841b.tar.gz\"],
+        sha256 = \"f466ca7bc4b876cfa9edb4870275207e580588f85f8fae268c40277846a6d8de\",
+        strip_prefix = \"openssl-cbs-dab3282af49f134766abcda5f95cbb19057a53d1\",
+        urls = [\"https://github.com/maistra/openssl-cbs/archive/dab3282af49f134766abcda5f95cbb19057a53d1.tar.gz\"],
     ),"
 replace_text
 
@@ -172,8 +172,8 @@ FILE="source/extensions/quic_listeners/quiche/platform/BUILD"
 DELETE_START_PATTERN="\"ssl\""
 DELETE_STOP_PATTERN=""
 START_OFFSET="0"
-ADD_TEXT="    \"ssl\",
-    \"openssl_cbs_lib\","
+ADD_TEXT="        \"ssl\",
+        \"openssl_cbs_lib\","
 replace_text
 
 FILE="bazel/envoy_build_system.bzl"
@@ -203,3 +203,28 @@ sed -i 's|#include "openssl/base.h"|#include "opensslcbs/cbs.h"|g' ${SOURCE_DIR}
 sed -i 's|#include "openssl/bytestring.h"||g' ${SOURCE_DIR}/source/extensions/quic_listeners/quiche/platform/quic_cert_utils_impl.cc
 sed -i 's|QuicPlatformTest, QuicStackTraceTest|QuicPlatformTest, DISABLED_QuicStackTraceTest|g' ${SOURCE_DIR}/test/extensions/quic_listeners/quiche/platform/quic_platform_test.cc
 
+sed -i 's|#include "openssl/bytestring.h"||g' ${SOURCE_DIR}/source/common/crypto/utility.cc
+
+sed -i 's|#include "openssl/bytestring.h"|#include "opensslcbs/cbs.h"|g' ${SOURCE_DIR}/source/extensions/filters/http/lua/lua_filter.cc
+sed -i 's|#include "openssl/base64.h"||g' ${SOURCE_DIR}/source/extensions/filters/http/lua/lua_filter.cc
+
+FILE="source/extensions/filters/http/lua/BUILD"
+DELETE_START_PATTERN="lua_filter.h"
+DELETE_STOP_PATTERN="deps = ["
+START_OFFSET="0"
+ADD_TEXT="    hdrs = [\"lua_filter.h\"],
+    external_deps = [
+      \"openssl_cbs_lib\",
+    ],"
+replace_text
+
+FILE="source/extensions/filters/http/lua/lua_filter.cc"
+DELETE_START_PATTERN="EVP_parse_public_key"
+DELETE_STOP_PATTERN="EVP_parse_public_key"
+START_OFFSET="-1"
+ADD_TEXT="  const uint8_t* data = reinterpret_cast<const uint8_t*>(keyder.data());
+  EVP_PKEY* key = d2i_PUBKEY(nullptr, &data, keyder.length());"
+replace_text
+
+sed -i 's|#include "openssl/base64.h"||g' ${SOURCE_DIR}/test/extensions/filters/http/lua/lua_filter_test.cc
+sed -i 's|#include "openssl/bytestring.h"||g' ${SOURCE_DIR}/test/extensions/filters/http/lua/lua_filter_test.cc
