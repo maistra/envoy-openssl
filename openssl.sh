@@ -199,8 +199,8 @@ replace_text
 
 sed -i 's|ENVOY_SSL_VERSION|"OpenSSL_1_1_1"|g' ${SOURCE_DIR}/source/common/common/version.cc
 
-sed -i 's|#include "openssl/base.h"|#include "opensslcbs/cbs.h"|g' ${SOURCE_DIR}/source/extensions/quic_listeners/quiche/platform/quic_cert_utils_impl.h
-sed -i 's|#include "openssl/bytestring.h"||g' ${SOURCE_DIR}/source/extensions/quic_listeners/quiche/platform/quic_cert_utils_impl.cc
+sed -i 's|#include "openssl/base.h"||g' ${SOURCE_DIR}/source/extensions/quic_listeners/quiche/platform/quic_cert_utils_impl.h
+sed -i 's|#include "openssl/bytestring.h"|#include "opensslcbs/cbs.h"|g' ${SOURCE_DIR}/source/extensions/quic_listeners/quiche/platform/quic_cert_utils_impl.cc
 sed -i 's|QuicPlatformTest, QuicStackTraceTest|QuicPlatformTest, DISABLED_QuicStackTraceTest|g' ${SOURCE_DIR}/test/extensions/quic_listeners/quiche/platform/quic_platform_test.cc
 
 sed -i 's|#include "openssl/bytestring.h"||g' ${SOURCE_DIR}/source/common/crypto/utility.cc
