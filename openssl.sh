@@ -43,7 +43,6 @@ rm -rf ${SOURCE_DIR}/test/extensions/filters/listener/tls_inspector
 /usr/bin/cp -rf test/extensions/filters/listener/tls_inspector ${SOURCE_DIR}/test/extensions/filters/listener/
 /usr/bin/cp -rf test/common/network/* ${SOURCE_DIR}/test/common/network/
 /usr/bin/cp -rf test/integration/* ${SOURCE_DIR}/test/integration/
-/usr/bin/cp -rf source/common/network/connection_impl.cc ${SOURCE_DIR}/source/common/network
 
 /usr/bin/cp openssl.BUILD ${SOURCE_DIR}
 
@@ -197,10 +196,29 @@ START_OFFSET="0"
 ADD_TEXT=""
 replace_text
 
+FILE="source/common/network/connection_impl.cc"
+DELETE_START_PATTERN="close(ConnectionCloseType::NoFlush)"
+DELETE_STOP_PATTERN=""
+START_OFFSET="0"
+ADD_TEXT="  if (ioHandle().fd() == -1 && delayed_close_timer_ == nullptr) {
+    close(ConnectionCloseType::NoFlush);
+  }"
+replace_text
+
+FILE="source/common/network/connection_impl.cc"
+DELETE_START_PATTERN="ConnectionImpl file event was unexpectedly reset"
+DELETE_STOP_PATTERN="file_event_->activate(Event::FileReadyType::Write)"
+START_OFFSET="0"
+ADD_TEXT="      ASSERT(file_event_ != nullptr, \"ConnectionImpl file event was unexpectedly reset\");
+      if (file_event_ != nullptr) {
+        file_event_->activate(Event::FileReadyType::Write);
+      }"
+replace_text
+
 sed -i 's|ENVOY_SSL_VERSION|"OpenSSL_1_1_1"|g' ${SOURCE_DIR}/source/common/common/version.cc
 
-sed -i 's|#include "openssl/base.h"||g' ${SOURCE_DIR}/source/extensions/quic_listeners/quiche/platform/quic_cert_utils_impl.h
-sed -i 's|#include "openssl/bytestring.h"|#include "opensslcbs/cbs.h"|g' ${SOURCE_DIR}/source/extensions/quic_listeners/quiche/platform/quic_cert_utils_impl.cc
+sed -i 's|#include "openssl/base.h"|#include "opensslcbs/cbs.h"|g' ${SOURCE_DIR}/source/extensions/quic_listeners/quiche/platform/quic_cert_utils_impl.h
+sed -i 's|#include "openssl/bytestring.h"||g' ${SOURCE_DIR}/source/extensions/quic_listeners/quiche/platform/quic_cert_utils_impl.cc
 sed -i 's|QuicPlatformTest, QuicStackTraceTest|QuicPlatformTest, DISABLED_QuicStackTraceTest|g' ${SOURCE_DIR}/test/extensions/quic_listeners/quiche/platform/quic_platform_test.cc
 
 sed -i 's|#include "openssl/bytestring.h"||g' ${SOURCE_DIR}/source/common/crypto/utility.cc
