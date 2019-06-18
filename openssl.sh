@@ -21,7 +21,6 @@ build --cxxopt -DENVOY_IGNORE_GLIBCXX_USE_CXX11_ABI_ERROR=1
 build --cxxopt -Wnon-virtual-dtor
 build --cxxopt -Wformat
 build --cxxopt -Wformat-security
-build --cxxopt -Wno-error=old-style-cast
 build --cxxopt -Wno-error=deprecated-declarations
 build --cxxopt -Wno-error=unused-variable
 build --cxxopt -w
@@ -69,9 +68,9 @@ DELETE_STOP_PATTERN="),"
 START_OFFSET="0"
 ADD_TEXT="    #EXTERNAL OPENSSL
     bssl_wrapper = dict(
-        sha256 = \"38064f725b8b74f6dbe1d062e5a972b5d17fad4571060d4092eb2dce7ef27819\",
-        strip_prefix = \"bssl_wrapper-e87a3217ce61f8681e9c10776a62afccf563230a\",
-        urls = [\"https://github.com/maistra/bssl_wrapper/archive/e87a3217ce61f8681e9c10776a62afccf563230a.tar.gz\"],
+        sha256 = \"5c712e4945f39ce2d3f6420f1dfb82980653f0e85bf50968f7cb2be90d6edbf2\",
+        strip_prefix = \"bssl_wrapper-044202abbd4a345f2067e2a51f46ad4468237c59\",
+        urls = [\"https://github.com/bdecoste/bssl_wrapper/archive/044202abbd4a345f2067e2a51f46ad4468237c59.tar.gz\"],
     ),
     #EXTERNAL OPENSSL
     openssl_cbs = dict(
@@ -222,6 +221,43 @@ sed -i 's|#include "openssl/bytestring.h"||g' ${SOURCE_DIR}/source/extensions/qu
 sed -i 's|QuicPlatformTest, QuicStackTraceTest|QuicPlatformTest, DISABLED_QuicStackTraceTest|g' ${SOURCE_DIR}/test/extensions/quic_listeners/quiche/platform/quic_platform_test.cc
 
 sed -i 's|#include "openssl/bytestring.h"||g' ${SOURCE_DIR}/source/common/crypto/utility.cc
+sed -i 's|EVP_DigestVerifyInit(ctx.get()|EVP_DigestVerifyInit(ctx|g' ${SOURCE_DIR}/source/common/crypto/utility.cc
+sed -i 's|EVP_DigestVerify(ctx.get()|EVP_DigestVerify(ctx|g' ${SOURCE_DIR}/source/common/crypto/utility.cc
+
+FILE="source/common/crypto/utility.cc"
+DELETE_START_PATTERN="EVP_parse_public_key"
+DELETE_STOP_PATTERN="EVP_parse_public_key"
+START_OFFSET="-1"
+ADD_TEXT="  const uint8_t* data = reinterpret_cast<const uint8_t*>(key.data());
+  EVP_PKEY* pkey = d2i_PUBKEY(nullptr, &data, key.size());
+  return PublicKeyPtr(pkey);"
+replace_text
+
+FILE="source/common/crypto/utility.cc"
+DELETE_START_PATTERN="ScopedEVP_MD_CTX"
+DELETE_STOP_PATTERN=""
+START_OFFSET="0"
+ADD_TEXT="  EVP_MD_CTX *ctx;
+  ctx = EVP_MD_CTX_new();"
+replace_text
+
+FILE="source/common/crypto/utility.h"
+DELETE_START_PATTERN="openssl/evp.h"
+DELETE_STOP_PATTERN=""
+START_OFFSET="0"
+ADD_TEXT="#include \"openssl/evp.h\"
+#include \"opensslcbs/cbs.h\"
+#include \"bssl_wrapper/bssl_wrapper.h\""
+replace_text
+
+FILE="source/common/crypto/BUILD"
+DELETE_START_PATTERN="\"ssl\""
+DELETE_STOP_PATTERN=""
+START_OFFSET="0"
+ADD_TEXT="        \"ssl\",
+        \"openssl_cbs_lib\",
+        \"bssl_wrapper_lib\""
+replace_text
 
 sed -i 's|#include "openssl/bytestring.h"|#include "opensslcbs/cbs.h"|g' ${SOURCE_DIR}/source/extensions/filters/http/lua/lua_filter.cc
 sed -i 's|#include "openssl/base64.h"||g' ${SOURCE_DIR}/source/extensions/filters/http/lua/lua_filter.cc
@@ -234,14 +270,6 @@ ADD_TEXT="    hdrs = [\"lua_filter.h\"],
     external_deps = [
       \"openssl_cbs_lib\",
     ],"
-replace_text
-
-FILE="source/extensions/filters/http/lua/lua_filter.cc"
-DELETE_START_PATTERN="EVP_parse_public_key"
-DELETE_STOP_PATTERN="EVP_parse_public_key"
-START_OFFSET="-1"
-ADD_TEXT="  const uint8_t* data = reinterpret_cast<const uint8_t*>(keyder.data());
-  EVP_PKEY* key = d2i_PUBKEY(nullptr, &data, keyder.length());"
 replace_text
 
 sed -i 's|#include "openssl/base64.h"||g' ${SOURCE_DIR}/test/extensions/filters/http/lua/lua_filter_test.cc
