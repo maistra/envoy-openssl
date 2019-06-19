@@ -2,6 +2,7 @@ set -x
 
 SOURCE_DIR=$1
 TARGET=$2
+PROXY_SHA=$3
 
 if [ "${GIT_RESET}" == "true" ]; then
   pushd ${SOURCE_DIR}
@@ -215,7 +216,7 @@ ADD_TEXT="      ASSERT(file_event_ != nullptr, \"ConnectionImpl file event was u
       }"
 replace_text
 
-sed -i 's|ENVOY_SSL_VERSION|"OpenSSL_1_1_1"|g' ${SOURCE_DIR}/source/common/common/version.cc
+sed -i "s|ENVOY_SSL_VERSION|\"OpenSSL_1_1_1-${PROXY_SHA}\"|g" ${SOURCE_DIR}/source/common/common/version.cc
 
 sed -i 's|#include "openssl/base.h"|#include "opensslcbs/cbs.h"|g' ${SOURCE_DIR}/source/extensions/quic_listeners/quiche/platform/quic_cert_utils_impl.h
 sed -i 's|#include "openssl/bytestring.h"||g' ${SOURCE_DIR}/source/extensions/quic_listeners/quiche/platform/quic_cert_utils_impl.cc
