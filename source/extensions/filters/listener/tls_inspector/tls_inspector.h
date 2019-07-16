@@ -77,6 +77,7 @@ private:
   void onTimeout();
   void done(bool success);
   void onServername(absl::string_view name);
+  void setIstioApplicationProtocol();
 
   ConfigSharedPtr config_;
   Network::ListenerFilterCallbacks* cb_;
@@ -86,6 +87,7 @@ private:
   bssl::UniquePtr<SSL> ssl_;
   uint64_t read_{0};
   bool alpn_found_{false};
+  bool istio_protocol_required_{false};
   bool clienthello_success_{false};
 
   static thread_local uint8_t buf_[Config::TLS_MAX_CLIENT_HELLO];

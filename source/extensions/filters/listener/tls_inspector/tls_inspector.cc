@@ -42,8 +42,10 @@ Config::Config(Stats::Scope& scope, uint32_t max_client_hello_size)
   auto tlsext_servername_cb = +[](SSL* ssl, int* out_alert, void* arg) -> int {
     Filter* filter = static_cast<Filter*>(SSL_get_app_data(ssl));
     absl::string_view servername = SSL_get_servername(ssl, TLSEXT_NAMETYPE_host_name);
-    filter->onCert();
     filter->onServername(servername);
+    if (servername.rfind("outbound_") != std::string::npos) {
+      filter->setIstioApplicationProtocol();
+    }
 
     return Envoy::Extensions::ListenerFilters::TlsInspector::getServernameCallbackReturn(out_alert);
   };
@@ -59,8 +61,8 @@ Config::Config(Stats::Scope& scope, uint32_t max_client_hello_size)
   SSL_CTX_set_alpn_select_cb(ssl_ctx_.get(), alpn_cb, nullptr);
 
   auto cert_cb = [](SSL* ssl, void* arg) -> int {
-//    Filter* filter = static_cast<Filter*>(SSL_get_app_data(ssl));
-//    filter->onCert();    
+    Filter* filter = static_cast<Filter*>(SSL_get_app_data(ssl));
+    filter->onCert();    
 
     return SSL_TLSEXT_ERR_OK;
   };
@@ -111,14 +113,10 @@ void Filter::onALPN(const unsigned char* data, unsigned int len) {
 
 void Filter::onCert() {
   std::vector<absl::string_view> protocols;
-  protocols.emplace_back("istio");
-//  unsigned char protos[] = {
-//     5, 'i', 's', 't', 'i', 'o'
-//  };
-//  unsigned int num_protos = sizeof(protos);  
-//  protocols.emplace_back(reinterpret_cast<const char*>(protos), 6);
+  if (istio_protocol_required_) {
+    protocols.emplace_back("istio");
+  }
   cb_->socket().setRequestedApplicationProtocols(protocols);
-//  alpn_found_ = true;
 }
 
 void Filter::onServername(absl::string_view name) {
@@ -130,17 +128,10 @@ void Filter::onServername(absl::string_view name) {
     config_->stats().sni_not_found_.inc();
   }
   clienthello_success_ = true;
-//  std::vector<absl::string_view> protocols;
-//  protocols.at(0) = "istio";
-//  cb_->socket().setRequestedApplicationProtocols(protocols);
+}
 
-//  const unsigned char *alpn = NULL;
-//  unsigned int alpnlen = 0;
-//  SSL_get0_next_proto_negotiated(ssl_.get(), &alpn, &alpnlen);
-//  if (alpn == NULL) {
-//    SSL_get0_alpn_selected(ssl_.get(), &alpn, &alpnlen);
-//  }
-  
+void Filter::setIstioApplicationProtocol() {
+  istio_protocol_required_ = true;
 }
 
 void Filter::onRead() {
