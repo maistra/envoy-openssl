@@ -68,9 +68,9 @@ DELETE_STOP_PATTERN="),"
 START_OFFSET="0"
 ADD_TEXT="    #EXTERNAL OPENSSL
     bssl_wrapper = dict(
-        sha256 = \"5c712e4945f39ce2d3f6420f1dfb82980653f0e85bf50968f7cb2be90d6edbf2\",
-        strip_prefix = \"bssl_wrapper-044202abbd4a345f2067e2a51f46ad4468237c59\",
-        urls = [\"https://github.com/bdecoste/bssl_wrapper/archive/044202abbd4a345f2067e2a51f46ad4468237c59.tar.gz\"],
+        sha256 = \"81a59d013096015a93269325ee4148d826ffd7a9f019f622850a2b86974b9748\",
+        strip_prefix = \"bssl_wrapper-2eaed8832e12a0fada8f08a5e23522e035b80784\",
+        urls = [\"https://github.com/maistra/bssl_wrapper/archive/2eaed8832e12a0fada8f08a5e23522e035b80784.tar.gz\"],
     ),
     #EXTERNAL OPENSSL
     openssl_cbs = dict(
