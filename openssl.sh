@@ -275,3 +275,19 @@ replace_text
 
 sed -i 's|#include "openssl/base64.h"||g' ${SOURCE_DIR}/test/extensions/filters/http/lua/lua_filter_test.cc
 sed -i 's|#include "openssl/bytestring.h"||g' ${SOURCE_DIR}/test/extensions/filters/http/lua/lua_filter_test.cc
+
+FILE="test/integration/BUILD"
+DELETE_START_PATTERN="name = \"hotrestart_test\","
+DELETE_STOP_PATTERN="name = \"header_integration_test\","
+START_OFFSET="-1"
+ADD_TEXT="envoy_cc_test(
+    name = \"header_integration_test\","
+replace_text
+
+FILE="test/integration/BUILD"
+DELETE_START_PATTERN="name = \"ratelimit_integration_test\","
+DELETE_STOP_PATTERN="name = \"server_stats_interface\","
+START_OFFSET="-1"
+ADD_TEXT="envoy_cc_test_library(
+    name = \"server_stats_interface\","
+replace_text
