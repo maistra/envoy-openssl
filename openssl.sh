@@ -264,3 +264,8 @@ ADD_TEXT="envoy_cc_test_library(
     name = \"server_stats_interface\","
 replace_text
 
+sed -i 's|EXPECT_EQ(buffer_size, data.length());|if (buffer_size != data.length()) throw EnvoyException("EXPECT_EQ failed");|g' ${SOURCE_DIR}/test/common/network/connection_impl_test.cc
+sed -i 's|EXPECT_EQ(buffer_size, filter_seen);|if (buffer_size != filter_seen) throw EnvoyException("EXPECT_EQ failed");|g' ${SOURCE_DIR}/test/common/network/connection_impl_test.cc
+sed -i 's|EXPECT_EQ(option, input_option);|if (option != input_option) throw EnvoyException("EXPECT_EQ failed");|g' ${SOURCE_DIR}/test/common/network/socket_option_factory_test.cc
+sed -i 's|EXPECT_EQ(type, input_type);|if (type != input_type) throw EnvoyException("EXPECT_EQ failed");|g' ${SOURCE_DIR}/test/common/network/socket_option_factory_test.cc
+
