@@ -6,7 +6,6 @@
 #include "common/common/assert.h"
 #include "common/common/empty_string.h"
 #include "common/config/datasource.h"
-#include "common/config/tls_context_json.h"
 #include "common/protobuf/utility.h"
 #include "common/secret/sds_api.h"
 #include "common/ssl/certificate_validation_context_config_impl.h"
@@ -261,7 +260,6 @@ const std::string ClientContextConfigImpl::DEFAULT_CIPHER_SUITES =
 
 const std::string ClientContextConfigImpl::DEFAULT_CURVES = "X25519:"
                                                             "P-256";
-
 ClientContextConfigImpl::ClientContextConfigImpl(
     const envoy::api::v2::auth::UpstreamTlsContext& config, absl::string_view sigalgs,
     Server::Configuration::TransportSocketFactoryContext& factory_context)
@@ -281,17 +279,6 @@ ClientContextConfigImpl::ClientContextConfigImpl(
     throw EnvoyException("Multiple TLS certificates are not supported for client contexts");
   }
 }
-
-ClientContextConfigImpl::ClientContextConfigImpl(
-    const Json::Object& config,
-    Server::Configuration::TransportSocketFactoryContext& factory_context)
-    : ClientContextConfigImpl(
-          [&config] {
-            envoy::api::v2::auth::UpstreamTlsContext upstream_tls_context;
-            Config::TlsContextJson::translateUpstreamTlsContext(config, upstream_tls_context);
-            return upstream_tls_context;
-          }(),
-          factory_context) {}
 
 const unsigned ServerContextConfigImpl::DEFAULT_MIN_VERSION = TLS1_VERSION;
 const unsigned ServerContextConfigImpl::DEFAULT_MAX_VERSION = TLS1_3_VERSION;
@@ -349,17 +336,6 @@ ServerContextConfigImpl::ServerContextConfigImpl(
     throw EnvoyException("SDS and non-SDS TLS certificates may not be mixed in server contexts");
   }
 }
-
-ServerContextConfigImpl::ServerContextConfigImpl(
-    const Json::Object& config,
-    Server::Configuration::TransportSocketFactoryContext& factory_context)
-    : ServerContextConfigImpl(
-          [&config] {
-            envoy::api::v2::auth::DownstreamTlsContext downstream_tls_context;
-            Config::TlsContextJson::translateDownstreamTlsContext(config, downstream_tls_context);
-            return downstream_tls_context;
-          }(),
-          factory_context) {}
 
 // Append a SessionTicketKey to keys, initializing it with key_data.
 // Throws if key_data is invalid.

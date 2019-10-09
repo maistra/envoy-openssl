@@ -215,7 +215,9 @@ ADD_TEXT="      ASSERT(file_event_ != nullptr, \"ConnectionImpl file event was u
       }"
 replace_text
 
+sed -i "s|#ifdef ENVOY_SSL_VERSION|#ifdef GO_PATRIOTS|g" ${SOURCE_DIR}/source/common/common/version.cc
 sed -i "s|ENVOY_SSL_VERSION|\"OpenSSL_1_1_1-${PROXY_SHA}\"|g" ${SOURCE_DIR}/source/common/common/version.cc
+sed -i "s|#ifdef GO_PATRIOTS|#ifdef ENVOY_SSL_VERSION|g" ${SOURCE_DIR}/source/common/common/version.cc
 
 sed -i 's|#include "openssl/base.h"|#include "opensslcbs/cbs.h"|g' ${SOURCE_DIR}/source/extensions/quic_listeners/quiche/platform/quic_cert_utils_impl.h
 sed -i 's|#include "openssl/bytestring.h"||g' ${SOURCE_DIR}/source/extensions/quic_listeners/quiche/platform/quic_cert_utils_impl.cc

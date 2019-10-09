@@ -85,7 +85,7 @@ TEST_F(SslContextImplTest, TestCipherSuites) {
   )EOF";
 
   envoy::api::v2::auth::UpstreamTlsContext tls_context;
-  MessageUtil::loadFromYaml(TestEnvironment::substitute(yaml), tls_context);
+  TestUtility::loadFromYaml(TestEnvironment::substitute(yaml), tls_context);
   ClientContextConfigImpl cfg(tls_context, factory_context_);
   EXPECT_THROW_WITH_MESSAGE(manager_.createSslClientContext(store_, cfg), EnvoyException,
                             "Failed to initialize cipher suites "
@@ -104,7 +104,7 @@ TEST_F(SslContextImplTest, TestExpiringCert) {
  )EOF";
 
   envoy::api::v2::auth::UpstreamTlsContext tls_context;
-  MessageUtil::loadFromYaml(TestEnvironment::substitute(yaml), tls_context);
+  TestUtility::loadFromYaml(TestEnvironment::substitute(yaml), tls_context);
 
   ClientContextConfigImpl cfg(tls_context, factory_context_);
   Envoy::Ssl::ClientContextSharedPtr context(manager_.createSslClientContext(store_, cfg));
@@ -128,7 +128,7 @@ TEST_F(SslContextImplTest, TestExpiredCert) {
 )EOF";
 
   envoy::api::v2::auth::UpstreamTlsContext tls_context;
-  MessageUtil::loadFromYaml(TestEnvironment::substitute(yaml), tls_context);
+  TestUtility::loadFromYaml(TestEnvironment::substitute(yaml), tls_context);
   ClientContextConfigImpl cfg(tls_context, factory_context_);
   Envoy::Ssl::ClientContextSharedPtr context(manager_.createSslClientContext(store_, cfg));
   EXPECT_EQ(0U, context->daysUntilFirstCertExpires());
@@ -148,7 +148,7 @@ TEST_F(SslContextImplTest, TestGetCertInformation) {
 )EOF";
 
   envoy::api::v2::auth::UpstreamTlsContext tls_context;
-  MessageUtil::loadFromYaml(TestEnvironment::substitute(yaml), tls_context);
+  TestUtility::loadFromYaml(TestEnvironment::substitute(yaml), tls_context);
   ClientContextConfigImpl cfg(tls_context, factory_context_);
 
   Envoy::Ssl::ClientContextSharedPtr context(manager_.createSslClientContext(store_, cfg));
@@ -174,8 +174,8 @@ TEST_F(SslContextImplTest, TestGetCertInformation) {
   std::string ca_cert_partial_output(TestEnvironment::substitute(ca_cert_json));
   std::string cert_chain_partial_output(TestEnvironment::substitute(cert_chain_json));
   envoy::admin::v2alpha::CertificateDetails certificate_details, cert_chain_details;
-  MessageUtil::loadFromJson(ca_cert_partial_output, certificate_details);
-  MessageUtil::loadFromJson(cert_chain_partial_output, cert_chain_details);
+  TestUtility::loadFromJson(ca_cert_partial_output, certificate_details);
+  TestUtility::loadFromJson(cert_chain_partial_output, cert_chain_details);
 
   MessageDifferencer message_differencer;
   message_differencer.set_scope(MessageDifferencer::Scope::PARTIAL);
@@ -198,7 +198,7 @@ TEST_F(SslContextImplTest, TestGetCertInformationWithSAN) {
 )EOF";
 
   envoy::api::v2::auth::UpstreamTlsContext tls_context;
-  MessageUtil::loadFromYaml(TestEnvironment::substitute(yaml), tls_context);
+  TestUtility::loadFromYaml(TestEnvironment::substitute(yaml), tls_context);
   ClientContextConfigImpl cfg(tls_context, factory_context_);
 
   Envoy::Ssl::ClientContextSharedPtr context(manager_.createSslClientContext(store_, cfg));
@@ -228,8 +228,8 @@ TEST_F(SslContextImplTest, TestGetCertInformationWithSAN) {
   std::string ca_cert_partial_output(TestEnvironment::substitute(ca_cert_json));
   std::string cert_chain_partial_output(TestEnvironment::substitute(cert_chain_json));
   envoy::admin::v2alpha::CertificateDetails certificate_details, cert_chain_details;
-  MessageUtil::loadFromJson(ca_cert_partial_output, certificate_details);
-  MessageUtil::loadFromJson(cert_chain_partial_output, cert_chain_details);
+  TestUtility::loadFromJson(ca_cert_partial_output, certificate_details);
+  TestUtility::loadFromJson(cert_chain_partial_output, cert_chain_details);
 
   MessageDifferencer message_differencer;
   message_differencer.set_scope(MessageDifferencer::Scope::PARTIAL);
@@ -256,7 +256,7 @@ TEST_F(SslContextImplTest, TestGetCertInformationWithExpiration) {
 )EOF";
 
   envoy::api::v2::auth::UpstreamTlsContext tls_context;
-  MessageUtil::loadFromYaml(TestEnvironment::substitute(yaml), tls_context);
+  TestUtility::loadFromYaml(TestEnvironment::substitute(yaml), tls_context);
   ClientContextConfigImpl cfg(tls_context, factory_context_);
 
   Envoy::Ssl::ClientContextSharedPtr context(manager_.createSslClientContext(store_, cfg));
@@ -279,7 +279,7 @@ TEST_F(SslContextImplTest, TestGetCertInformationWithExpiration) {
 
   const std::string ca_cert_partial_output(TestEnvironment::substitute(ca_cert_json));
   envoy::admin::v2alpha::CertificateDetails certificate_details;
-  MessageUtil::loadFromJson(ca_cert_partial_output, certificate_details);
+  TestUtility::loadFromJson(ca_cert_partial_output, certificate_details);
 
   MessageDifferencer message_differencer;
   message_differencer.set_scope(MessageDifferencer::Scope::PARTIAL);
@@ -287,8 +287,8 @@ TEST_F(SslContextImplTest, TestGetCertInformationWithExpiration) {
 }
 
 TEST_F(SslContextImplTest, TestNoCert) {
-  Json::ObjectSharedPtr loader = TestEnvironment::jsonLoadFromString("{}");
-  ClientContextConfigImpl cfg(*loader, factory_context_);
+  envoy::api::v2::auth::UpstreamTlsContext config;
+  ClientContextConfigImpl cfg(config, factory_context_);
   Envoy::Ssl::ClientContextSharedPtr context(manager_.createSslClientContext(store_, cfg));
   EXPECT_EQ(nullptr, context->getCaCertInformation());
   EXPECT_TRUE(context->getCertChainInformation().empty());
@@ -309,7 +309,7 @@ TEST_F(SslContextImplTest, AtMostOneRsaCert) {
       private_key:
         filename: "{{ test_rundir }}/test/extensions/transport_sockets/tls/test_data/selfsigned_key.pem"
   )EOF";
-  MessageUtil::loadFromYaml(TestEnvironment::substitute(tls_context_yaml), tls_context);
+  TestUtility::loadFromYaml(TestEnvironment::substitute(tls_context_yaml), tls_context);
   ServerContextConfigImpl server_context_config(tls_context, factory_context_);
   EXPECT_THROW_WITH_REGEX(manager_.createSslServerContext(store_, server_context_config, {}),
                           EnvoyException,
@@ -331,7 +331,7 @@ TEST_F(SslContextImplTest, AtMostOneEcdsaCert) {
       private_key:
         filename: "{{ test_rundir }}/test/extensions/transport_sockets/tls/test_data/selfsigned_ecdsa_p256_key.pem"
   )EOF";
-  MessageUtil::loadFromYaml(TestEnvironment::substitute(tls_context_yaml), tls_context);
+  TestUtility::loadFromYaml(TestEnvironment::substitute(tls_context_yaml), tls_context);
   ServerContextConfigImpl server_context_config(tls_context, factory_context_);
   EXPECT_THROW_WITH_REGEX(manager_.createSslServerContext(store_, server_context_config, {}),
                           EnvoyException,
@@ -360,7 +360,7 @@ public:
 
   void loadConfigYaml(const std::string& yaml) {
     envoy::api::v2::auth::DownstreamTlsContext tls_context;
-    MessageUtil::loadFromYaml(TestEnvironment::substitute(yaml), tls_context);
+    TestUtility::loadFromYaml(TestEnvironment::substitute(yaml), tls_context);
     ServerContextConfigImpl cfg(tls_context, factory_context_);
     loadConfig(cfg);
   }
@@ -586,7 +586,7 @@ TEST_F(ClientContextConfigImplTest, RSA2048Cert) {
   private_key:
     filename: "{{ test_rundir }}/test/extensions/transport_sockets/tls/test_data/selfsigned_key.pem"
   )EOF";
-  MessageUtil::loadFromYaml(TestEnvironment::substitute(tls_certificate_yaml),
+  TestUtility::loadFromYaml(TestEnvironment::substitute(tls_certificate_yaml),
                             *tls_context.mutable_common_tls_context()->add_tls_certificates());
   ClientContextConfigImpl client_context_config(tls_context, factory_context_);
   Event::SimulatedTimeSystem time_system;
@@ -604,7 +604,7 @@ TEST_F(ClientContextConfigImplTest, RSA1024Cert) {
   private_key:
     filename: "{{ test_rundir }}/test/extensions/transport_sockets/tls/test_data/selfsigned_rsa_1024_key.pem"
   )EOF";
-  MessageUtil::loadFromYaml(TestEnvironment::substitute(tls_certificate_yaml),
+  TestUtility::loadFromYaml(TestEnvironment::substitute(tls_certificate_yaml),
                             *tls_context.mutable_common_tls_context()->add_tls_certificates());
   ClientContextConfigImpl client_context_config(tls_context, factory_context_);
   Event::SimulatedTimeSystem time_system;
@@ -626,7 +626,7 @@ TEST_F(ClientContextConfigImplTest, RSA3072Cert) {
   private_key:
     filename: "{{ test_rundir }}/test/extensions/transport_sockets/tls/test_data/selfsigned_rsa_3072_key.pem"
   )EOF";
-  MessageUtil::loadFromYaml(TestEnvironment::substitute(tls_certificate_yaml),
+  TestUtility::loadFromYaml(TestEnvironment::substitute(tls_certificate_yaml),
                             *tls_context.mutable_common_tls_context()->add_tls_certificates());
   ClientContextConfigImpl client_context_config(tls_context, factory_context_);
   Event::SimulatedTimeSystem time_system;
@@ -645,7 +645,7 @@ TEST_F(ClientContextConfigImplTest, RSA4096Cert) {
   private_key:
     filename: "{{ test_rundir }}/test/extensions/transport_sockets/tls/test_data/selfsigned_rsa_4096_key.pem"
   )EOF";
-  MessageUtil::loadFromYaml(TestEnvironment::substitute(tls_certificate_yaml),
+  TestUtility::loadFromYaml(TestEnvironment::substitute(tls_certificate_yaml),
                             *tls_context.mutable_common_tls_context()->add_tls_certificates());
   ClientContextConfigImpl client_context_config(tls_context, factory_context_);
   Event::SimulatedTimeSystem time_system;
@@ -663,7 +663,7 @@ TEST_F(ClientContextConfigImplTest, P256EcdsaCert) {
   private_key:
     filename: "{{ test_rundir }}/test/extensions/transport_sockets/tls/test_data/selfsigned_ecdsa_p256_key.pem"
   )EOF";
-  MessageUtil::loadFromYaml(TestEnvironment::substitute(tls_certificate_yaml),
+  TestUtility::loadFromYaml(TestEnvironment::substitute(tls_certificate_yaml),
                             *tls_context.mutable_common_tls_context()->add_tls_certificates());
   ClientContextConfigImpl client_context_config(tls_context, factory_context_);
   Event::SimulatedTimeSystem time_system;
@@ -681,7 +681,7 @@ TEST_F(ClientContextConfigImplTest, NonP256EcdsaCert) {
   private_key:
     filename: "{{ test_rundir }}/test/extensions/transport_sockets/tls/test_data/selfsigned_ecdsa_p384_key.pem"
   )EOF";
-  MessageUtil::loadFromYaml(TestEnvironment::substitute(tls_certificate_yaml),
+  TestUtility::loadFromYaml(TestEnvironment::substitute(tls_certificate_yaml),
                             *tls_context.mutable_common_tls_context()->add_tls_certificates());
   ClientContextConfigImpl client_context_config(tls_context, factory_context_);
   Event::SimulatedTimeSystem time_system;
@@ -703,9 +703,9 @@ TEST_F(ClientContextConfigImplTest, MultipleTlsCertificates) {
   private_key:
     filename: "{{ test_rundir }}/test/extensions/transport_sockets/tls/test_data/selfsigned_key.pem"
   )EOF";
-  MessageUtil::loadFromYaml(TestEnvironment::substitute(tls_certificate_yaml),
+  TestUtility::loadFromYaml(TestEnvironment::substitute(tls_certificate_yaml),
                             *tls_context.mutable_common_tls_context()->add_tls_certificates());
-  MessageUtil::loadFromYaml(TestEnvironment::substitute(tls_certificate_yaml),
+  TestUtility::loadFromYaml(TestEnvironment::substitute(tls_certificate_yaml),
                             *tls_context.mutable_common_tls_context()->add_tls_certificates());
   EXPECT_THROW_WITH_MESSAGE(
       ClientContextConfigImpl client_context_config(tls_context, factory_context_), EnvoyException,
@@ -722,7 +722,7 @@ TEST_F(ClientContextConfigImplTest, TlsCertificatesAndSdsConfig) {
   private_key:
     filename: "{{ test_rundir }}/test/extensions/transport_sockets/tls/test_data/selfsigned_key.pem"
   )EOF";
-  MessageUtil::loadFromYaml(TestEnvironment::substitute(tls_certificate_yaml),
+  TestUtility::loadFromYaml(TestEnvironment::substitute(tls_certificate_yaml),
                             *tls_context.mutable_common_tls_context()->add_tls_certificates());
   tls_context.mutable_common_tls_context()->add_tls_certificate_sds_secret_configs();
   EXPECT_THROW_WITH_MESSAGE(
@@ -731,60 +731,18 @@ TEST_F(ClientContextConfigImplTest, TlsCertificatesAndSdsConfig) {
 }
 
 // Validate context config supports SDS, and is marked as not ready if secrets are not yet
-// downloaded.
 TEST_F(ClientContextConfigImplTest, SecretNotReady) {
   envoy::api::v2::auth::UpstreamTlsContext tls_context;
   NiceMock<LocalInfo::MockLocalInfo> local_info;
-  NiceMock<Event::MockDispatcher> dispatcher;
-  NiceMock<Runtime::MockRandomGenerator> random;
   Stats::IsolatedStoreImpl stats;
-  NiceMock<Upstream::MockClusterManager> cluster_manager;
   NiceMock<Init::MockManager> init_manager;
-  NiceMock<Server::Configuration::MockTransportSocketFactoryContext> factory_context;
-  EXPECT_CALL(factory_context, localInfo()).WillOnce(ReturnRef(local_info));
-  EXPECT_CALL(factory_context, dispatcher()).WillOnce(ReturnRef(dispatcher));
-  EXPECT_CALL(factory_context, random()).WillOnce(ReturnRef(random));
-  EXPECT_CALL(factory_context, stats()).WillOnce(ReturnRef(stats));
-  EXPECT_CALL(factory_context, clusterManager()).WillOnce(ReturnRef(cluster_manager));
-  EXPECT_CALL(factory_context, initManager()).WillRepeatedly(Return(&init_manager));
+  NiceMock<Event::MockDispatcher> dispatcher;
+  EXPECT_CALL(factory_context_, localInfo()).WillOnce(ReturnRef(local_info));
+  EXPECT_CALL(factory_context_, stats()).WillOnce(ReturnRef(stats));
+  EXPECT_CALL(factory_context_, initManager()).WillRepeatedly(Return(&init_manager));
+  EXPECT_CALL(factory_context_, dispatcher()).WillOnce(ReturnRef(dispatcher));
   auto sds_secret_configs =
       tls_context.mutable_common_tls_context()->mutable_tls_certificate_sds_secret_configs()->Add();
-  sds_secret_configs->set_name("abc.com");
-  sds_secret_configs->mutable_sds_config();
-  ClientContextConfigImpl client_context_config(tls_context, factory_context);
-  // When sds secret is not downloaded, config is not ready.
-  EXPECT_FALSE(client_context_config.isReady());
-  // Set various callbacks to config.
-  NiceMock<Secret::MockSecretCallbacks> secret_callback;
-  client_context_config.setSecretUpdateCallback(
-      [&secret_callback]() { secret_callback.onAddOrUpdateSecret(); });
-  client_context_config.setSecretUpdateCallback([]() {});
-}
-
-// Validate client context config supports SDS, and is marked as not ready if dynamic
-// certificate validation context is not yet downloaded.
-TEST_F(ClientContextConfigImplTest, ValidationContextNotReady) {
-  envoy::api::v2::auth::UpstreamTlsContext tls_context;
-  envoy::api::v2::auth::TlsCertificate* client_cert =
-      tls_context.mutable_common_tls_context()->add_tls_certificates();
-  client_cert->mutable_certificate_chain()->set_filename(TestEnvironment::substitute(
-      "{{ test_rundir }}/test/extensions/transport_sockets/tls/test_data/selfsigned_cert.pem"));
-  client_cert->mutable_private_key()->set_filename(TestEnvironment::substitute(
-      "{{ test_rundir }}/test/extensions/transport_sockets/tls/test_data/selfsigned_key.pem"));
-  NiceMock<LocalInfo::MockLocalInfo> local_info;
-  NiceMock<Event::MockDispatcher> dispatcher;
-  NiceMock<Runtime::MockRandomGenerator> random;
-  Stats::IsolatedStoreImpl stats;
-  NiceMock<Upstream::MockClusterManager> cluster_manager;
-  NiceMock<Init::MockManager> init_manager;
-  EXPECT_CALL(factory_context_, localInfo()).WillOnce(ReturnRef(local_info));
-  EXPECT_CALL(factory_context_, dispatcher()).WillOnce(ReturnRef(dispatcher));
-  EXPECT_CALL(factory_context_, random()).WillOnce(ReturnRef(random));
-  EXPECT_CALL(factory_context_, stats()).WillOnce(ReturnRef(stats));
-  EXPECT_CALL(factory_context_, clusterManager()).WillOnce(ReturnRef(cluster_manager));
-  EXPECT_CALL(factory_context_, initManager()).WillRepeatedly(Return(&init_manager));
-  auto sds_secret_configs =
-      tls_context.mutable_common_tls_context()->mutable_validation_context_sds_secret_config();
   sds_secret_configs->set_name("abc.com");
   sds_secret_configs->mutable_sds_config();
   ClientContextConfigImpl client_context_config(tls_context, factory_context_);
@@ -793,8 +751,8 @@ TEST_F(ClientContextConfigImplTest, ValidationContextNotReady) {
   // Set various callbacks to config.
   NiceMock<Secret::MockSecretCallbacks> secret_callback;
   client_context_config.setSecretUpdateCallback(
-      [&secret_callback]() { secret_callback.onAddOrUpdateSecret(); });
-  client_context_config.setSecretUpdateCallback([]() {});
+    [&secret_callback]() { secret_callback.onAddOrUpdateSecret(); });
+    client_context_config.setSecretUpdateCallback([]() {});
 }
 
 // Validate that client context config with static TLS certificates is created successfully.
@@ -810,7 +768,7 @@ tls_certificate:
     filename: "{{ test_rundir }}/test/extensions/transport_sockets/tls/test_data/selfsigned_key.pem"
 )EOF";
 
-  MessageUtil::loadFromYaml(TestEnvironment::substitute(yaml), secret_config);
+  TestUtility::loadFromYaml(TestEnvironment::substitute(yaml), secret_config);
 
   envoy::api::v2::auth::UpstreamTlsContext tls_context;
   tls_context.mutable_common_tls_context()
@@ -919,7 +877,7 @@ TEST_F(ClientContextConfigImplTest, StaticCertificateValidationContext) {
     private_key:
       filename: "{{ test_rundir }}/test/extensions/transport_sockets/tls/test_data/selfsigned_key.pem"
   )EOF";
-  MessageUtil::loadFromYaml(TestEnvironment::substitute(tls_certificate_yaml),
+  TestUtility::loadFromYaml(TestEnvironment::substitute(tls_certificate_yaml),
                             tls_certificate_secret_config);
   factory_context_.secretManager().addStaticSecret(tls_certificate_secret_config);
   envoy::api::v2::auth::Secret certificate_validation_context_secret_config;
@@ -929,7 +887,7 @@ TEST_F(ClientContextConfigImplTest, StaticCertificateValidationContext) {
       trusted_ca: { filename: "{{ test_rundir }}/test/extensions/transport_sockets/tls/test_data/ca_cert.pem" }
       allow_expired_certificate: true
   )EOF";
-  MessageUtil::loadFromYaml(TestEnvironment::substitute(certificate_validation_context_yaml),
+  TestUtility::loadFromYaml(TestEnvironment::substitute(certificate_validation_context_yaml),
                             certificate_validation_context_secret_config);
   factory_context_.secretManager().addStaticSecret(certificate_validation_context_secret_config);
 
@@ -963,7 +921,7 @@ tls_certificate:
     filename: "{{ test_rundir }}/test/extensions/transport_sockets/tls/test_data/selfsigned_key.pem"
 )EOF";
 
-  MessageUtil::loadFromYaml(TestEnvironment::substitute(yaml), secret_config);
+  TestUtility::loadFromYaml(TestEnvironment::substitute(yaml), secret_config);
 
   factory_context_.secretManager().addStaticSecret(secret_config);
 
@@ -990,7 +948,7 @@ TEST_F(ClientContextConfigImplTest, MissingStaticCertificateValidationContext) {
       private_key:
         filename: "{{ test_rundir }}/test/extensions/transport_sockets/tls/test_data/selfsigned_key.pem"
     )EOF";
-  MessageUtil::loadFromYaml(TestEnvironment::substitute(tls_certificate_yaml),
+  TestUtility::loadFromYaml(TestEnvironment::substitute(tls_certificate_yaml),
                             tls_certificate_secret_config);
   factory_context_.secretManager().addStaticSecret(tls_certificate_secret_config);
   envoy::api::v2::auth::Secret certificate_validation_context_secret_config;
@@ -1000,7 +958,7 @@ TEST_F(ClientContextConfigImplTest, MissingStaticCertificateValidationContext) {
         trusted_ca: { filename: "{{ test_rundir }}/test/extensions/transport_sockets/tls/test_data/ca_cert.pem" }
         allow_expired_certificate: true
     )EOF";
-  MessageUtil::loadFromYaml(TestEnvironment::substitute(certificate_validation_context_yaml),
+  TestUtility::loadFromYaml(TestEnvironment::substitute(certificate_validation_context_yaml),
                             certificate_validation_context_secret_config);
   factory_context_.secretManager().addStaticSecret(certificate_validation_context_secret_config);
 
@@ -1037,9 +995,9 @@ TEST_F(ServerContextConfigImplTest, MultipleTlsCertificates) {
   private_key:
     filename: "{{ test_rundir }}/test/extensions/transport_sockets/tls/test_data/selfsigned_ecdsa_p256_key.pem"
   )EOF";
-  MessageUtil::loadFromYaml(TestEnvironment::substitute(rsa_tls_certificate_yaml),
+  TestUtility::loadFromYaml(TestEnvironment::substitute(rsa_tls_certificate_yaml),
                             *tls_context.mutable_common_tls_context()->add_tls_certificates());
-  MessageUtil::loadFromYaml(TestEnvironment::substitute(ecdsa_tls_certificate_yaml),
+  TestUtility::loadFromYaml(TestEnvironment::substitute(ecdsa_tls_certificate_yaml),
                             *tls_context.mutable_common_tls_context()->add_tls_certificates());
   ServerContextConfigImpl server_context_config(tls_context, factory_context_);
   auto tls_certs = server_context_config.tlsCertificates();
@@ -1059,7 +1017,7 @@ TEST_F(ServerContextConfigImplTest, TlsCertificatesAndSdsConfig) {
   private_key:
     filename: "{{ test_rundir }}/test/extensions/transport_sockets/tls/test_data/selfsigned_key.pem"
   )EOF";
-  MessageUtil::loadFromYaml(TestEnvironment::substitute(tls_certificate_yaml),
+  TestUtility::loadFromYaml(TestEnvironment::substitute(tls_certificate_yaml),
                             *tls_context.mutable_common_tls_context()->add_tls_certificates());
   tls_context.mutable_common_tls_context()->add_tls_certificate_sds_secret_configs();
   EXPECT_THROW_WITH_MESSAGE(
@@ -1079,17 +1037,13 @@ TEST_F(ServerContextConfigImplTest, MultiSdsConfig) {
 TEST_F(ServerContextConfigImplTest, SecretNotReady) {
   envoy::api::v2::auth::DownstreamTlsContext tls_context;
   NiceMock<LocalInfo::MockLocalInfo> local_info;
-  NiceMock<Event::MockDispatcher> dispatcher;
-  NiceMock<Runtime::MockRandomGenerator> random;
   Stats::IsolatedStoreImpl stats;
-  NiceMock<Upstream::MockClusterManager> cluster_manager;
   NiceMock<Init::MockManager> init_manager;
+  NiceMock<Event::MockDispatcher> dispatcher;
   EXPECT_CALL(factory_context_, localInfo()).WillOnce(ReturnRef(local_info));
-  EXPECT_CALL(factory_context_, dispatcher()).WillOnce(ReturnRef(dispatcher));
-  EXPECT_CALL(factory_context_, random()).WillOnce(ReturnRef(random));
   EXPECT_CALL(factory_context_, stats()).WillOnce(ReturnRef(stats));
-  EXPECT_CALL(factory_context_, clusterManager()).WillOnce(ReturnRef(cluster_manager));
   EXPECT_CALL(factory_context_, initManager()).WillRepeatedly(Return(&init_manager));
+  EXPECT_CALL(factory_context_, dispatcher()).WillOnce(ReturnRef(dispatcher));
   auto sds_secret_configs =
       tls_context.mutable_common_tls_context()->mutable_tls_certificate_sds_secret_configs()->Add();
   sds_secret_configs->set_name("abc.com");
@@ -1100,44 +1054,40 @@ TEST_F(ServerContextConfigImplTest, SecretNotReady) {
   // Set various callbacks to config.
   NiceMock<Secret::MockSecretCallbacks> secret_callback;
   server_context_config.setSecretUpdateCallback(
-      [&secret_callback]() { secret_callback.onAddOrUpdateSecret(); });
-  server_context_config.setSecretUpdateCallback([]() {});
+    [&secret_callback]() { secret_callback.onAddOrUpdateSecret(); });
+    server_context_config.setSecretUpdateCallback([]() {});
 }
 
 // Validate server context config supports SDS, and is marked as not ready if dynamic
 // certificate validation context is not yet downloaded.
-TEST_F(ServerContextConfigImplTest, ValidationContextNotReady) {
-  envoy::api::v2::auth::DownstreamTlsContext tls_context;
-  envoy::api::v2::auth::TlsCertificate* server_cert =
+TEST_F(ClientContextConfigImplTest, ValidationContextNotReady) {
+  envoy::api::v2::auth::UpstreamTlsContext tls_context;
+  envoy::api::v2::auth::TlsCertificate* client_cert =
       tls_context.mutable_common_tls_context()->add_tls_certificates();
-  server_cert->mutable_certificate_chain()->set_filename(TestEnvironment::substitute(
+  client_cert->mutable_certificate_chain()->set_filename(TestEnvironment::substitute(
       "{{ test_rundir }}/test/extensions/transport_sockets/tls/test_data/selfsigned_cert.pem"));
-  server_cert->mutable_private_key()->set_filename(TestEnvironment::substitute(
+  client_cert->mutable_private_key()->set_filename(TestEnvironment::substitute(
       "{{ test_rundir }}/test/extensions/transport_sockets/tls/test_data/selfsigned_key.pem"));
   NiceMock<LocalInfo::MockLocalInfo> local_info;
-  NiceMock<Event::MockDispatcher> dispatcher;
-  NiceMock<Runtime::MockRandomGenerator> random;
   Stats::IsolatedStoreImpl stats;
-  NiceMock<Upstream::MockClusterManager> cluster_manager;
   NiceMock<Init::MockManager> init_manager;
+  NiceMock<Event::MockDispatcher> dispatcher;
   EXPECT_CALL(factory_context_, localInfo()).WillOnce(ReturnRef(local_info));
-  EXPECT_CALL(factory_context_, dispatcher()).WillOnce(ReturnRef(dispatcher));
-  EXPECT_CALL(factory_context_, random()).WillOnce(ReturnRef(random));
   EXPECT_CALL(factory_context_, stats()).WillOnce(ReturnRef(stats));
-  EXPECT_CALL(factory_context_, clusterManager()).WillOnce(ReturnRef(cluster_manager));
   EXPECT_CALL(factory_context_, initManager()).WillRepeatedly(Return(&init_manager));
+  EXPECT_CALL(factory_context_, dispatcher()).WillOnce(ReturnRef(dispatcher));
   auto sds_secret_configs =
       tls_context.mutable_common_tls_context()->mutable_validation_context_sds_secret_config();
   sds_secret_configs->set_name("abc.com");
   sds_secret_configs->mutable_sds_config();
-  ServerContextConfigImpl server_context_config(tls_context, factory_context_);
+  ClientContextConfigImpl client_context_config(tls_context, factory_context_);
   // When sds secret is not downloaded, config is not ready.
-  EXPECT_FALSE(server_context_config.isReady());
+  EXPECT_FALSE(client_context_config.isReady());
   // Set various callbacks to config.
   NiceMock<Secret::MockSecretCallbacks> secret_callback;
-  server_context_config.setSecretUpdateCallback(
-      [&secret_callback]() { secret_callback.onAddOrUpdateSecret(); });
-  server_context_config.setSecretUpdateCallback([]() {});
+  client_context_config.setSecretUpdateCallback(
+    [&secret_callback]() { secret_callback.onAddOrUpdateSecret(); });
+    client_context_config.setSecretUpdateCallback([]() {});
 }
 
 // TlsCertificate messages must have a cert for servers.
