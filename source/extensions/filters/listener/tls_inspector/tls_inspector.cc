@@ -39,6 +39,17 @@ Config::Config(Stats::Scope& scope, uint32_t max_client_hello_size)
 
   Envoy::Extensions::ListenerFilters::TlsInspector::set_certificate_cb(ssl_ctx_.get());
 
+  /* 
+   * MAISTRA
+   * Application protocol hack part 1. When the endpoint is determined to be TLS then the "istio" application protocol is required in order to enable the
+   * proper TLS filter. BoringSSL has the ability to peek ahead to obtain information during the SSL handshake that is not supposed to be available until
+   * a later callback. During the certificate callback BoringSSL peeks head and obtains the application protocols that is only available during the later
+   * ALPN callback in OpenSSL. The BoringSSL code then terminates the filter before the ALPN callback is ever called. BoringSSL can get away with this since
+   * it has this peek ahead functionality not available in OpenSSL. The following hack simulates this behavior: when there is a TLS endpoint the endpoint
+   * hostname will contain "outbound_" so that is used as a trigger to add the "istio" application protocol. If the endpoint is not TLS then the servername
+   * will not contain "outbound_". One issue, of course, is that if the actual endpoint servername contains "outbound_" then this logic will incorrectly
+   * identify the endpoint as TLS. 
+   */
   auto tlsext_servername_cb = +[](SSL* ssl, int* out_alert, void* arg) -> int {
     Filter* filter = static_cast<Filter*>(SSL_get_app_data(ssl));
     absl::string_view servername = SSL_get_servername(ssl, TLSEXT_NAMETYPE_host_name);
@@ -111,6 +122,11 @@ void Filter::onALPN(const unsigned char* data, unsigned int len) {
   alpn_found_ = true;
 }
 
+/* 
+ * MAISTRA
+ * Application protocol hack part 2. If determined that the "istio" application protocol needs to be added (i.e. endpoint is TLS)
+ * then add it to the application protocol list as part of the certificate callback.
+ */
 void Filter::onCert() {
   std::vector<absl::string_view> protocols;
   if (istio_protocol_required_) {
