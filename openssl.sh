@@ -1,16 +1,8 @@
-set -x 
+set -x
 
 SOURCE_DIR=$1
 TARGET=$2
 PROXY_SHA=$3
-
-if [ "${GIT_RESET}" == "true" ]; then
-  pushd ${SOURCE_DIR}
-    git fetch upstream
-    git checkout master
-    git reset --hard 8912fa36acdf4367d37998d98cead376762d2b49 #upstream/master
-  popd
-fi
 
 if [ "$TARGET" == "RESET" ]; then
   exit
@@ -47,7 +39,15 @@ rm -rf ${SOURCE_DIR}/test/extensions/filters/listener/tls_inspector
 /usr/bin/cp openssl.BUILD ${SOURCE_DIR}
 
 function replace_text() {
+	echo "Delete start pattern: ${DELETE_START_PATTERN} stop pattern: ${DELETE_STOP_PATTERN} offset: ${START_OFFSET} file: ${FILE}"
+
   START=$(grep -nr "${DELETE_START_PATTERN}" ${SOURCE_DIR}/${FILE} | cut -d':' -f1)
+  if [[ START == *$'\n'* ]]; then
+    echo "Replace text ${DELETE_START_PATTERN}  matched multiple results. Please update openssl.sh."
+    exit -1
+  fi
+
+	echo "start: ${START}"
   START=$((${START} + ${START_OFFSET}))
   if [[ ! -z "${DELETE_STOP_PATTERN}" ]]; then
     STOP=$(tail --lines=+${START}  ${SOURCE_DIR}/${FILE} | grep -nr "${DELETE_STOP_PATTERN}" - |  cut -d':' -f1 | head -1)
@@ -57,6 +57,7 @@ function replace_text() {
   fi
   CUT_TEXT=$(sed -n "${START},${CUT} p" ${SOURCE_DIR}/${FILE})
   sed -i "${START},${CUT} d" ${SOURCE_DIR}/${FILE}
+	echo "Cut text: ${CUT_TEXT}"
 
   if [[ ! -z "${ADD_TEXT}" ]]; then
     ex -s -c "${START}i|${ADD_TEXT}" -c x ${SOURCE_DIR}/${FILE}
@@ -97,7 +98,7 @@ if [ "$UPDATE_JWT" == "true" ]; then
     com_github_google_jwt_verify = dict(
         sha256 = \"bc5a7954a985b23bf5ed31527764572562f3b92476a5f0e296a3c07d0e93f903\",
         strip_prefix = \"jwt_verify_lib-389bfdceef7e79b05315c83b5e7cab37728e2e5b\",
-        urls = [\"https://github.com/bdecoste/jwt_verify_lib/archive/389bfdceef7e79b05315c83b5e7cab37728e2e5b.tar.gz\"],
+        urls = [\"https://github.com/maistra/jwt_verify_lib/archive/389bfdceef7e79b05315c83b5e7cab37728e2e5b.tar.gz\"],
     ),"
   replace_text
 fi
@@ -141,6 +142,17 @@ ADD_TEXT="
     _openssl_cbs()
 
 "
+replace_text
+
+# There are two instances of _boringssl_fips. A call and a definition. Replace_text only operates on a 
+# single match, which likely makes sense since you can optionally add text. As such, create two entries.
+# The first for the definition and the second for the call. Doing this in the wrong order would cause
+# multiple results.
+FILE="bazel/repositories.bzl"
+DELETE_START_PATTERN="def _boringssl_fips():"
+DELETE_STOP_PATTERN=" )"
+START_OFFSET="0"
+ADD_TEXT=""
 replace_text
 
 FILE="bazel/repositories.bzl"
@@ -254,12 +266,16 @@ ADD_TEXT="#include \"openssl/evp.h\"
 replace_text
 
 FILE="source/common/crypto/BUILD"
-DELETE_START_PATTERN="\"ssl\""
+DELETE_START_PATTERN="name = \"utility_lib\","
 DELETE_STOP_PATTERN=""
 START_OFFSET="0"
-ADD_TEXT="        \"ssl\",
-        \"openssl_cbs_lib\",
-        \"bssl_wrapper_lib\""
+ADD_TEXT="   name = \"utility_lib\",
+   external_deps = [
+     \"ssl\",
+     \"openssl_cbs_lib\",
+     \"bssl_wrapper_lib\"
+    ],"
+],
 replace_text
 
 sed -i 's|#include "openssl/bytestring.h"|#include "opensslcbs/cbs.h"|g' ${SOURCE_DIR}/source/extensions/filters/http/lua/lua_filter.cc
